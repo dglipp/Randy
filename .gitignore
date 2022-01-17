@@ -1,3 +1,5 @@
-cmake-build-debug
 .idea
-resources
+bin
+cmake-build-debug
+deps
+data
