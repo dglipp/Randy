@@ -1,4 +1,6 @@
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -10,6 +12,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <easy/profiler.h>
 
 static const char * shaderCodeVertex = R"(
         #version 460 core
@@ -68,8 +71,11 @@ struct PerFrameData {
 
 int main()
 {
-    // INIT
+    // EASY PROFILER INIT
+    EASY_MAIN_THREAD;
+    EASY_PROFILER_ENABLE;
 
+    // INIT
     glfwSetErrorCallback([] (int error, const char * description) {
        std::cout << "Error: " << description << "\n";
     });
@@ -123,11 +129,15 @@ int main()
     glUseProgram(program);
 
     // CREATING BUFFER DATA
+    EASY_BLOCK("Create resources");
+
     const GLsizeiptr kBufferSize = sizeof(PerFrameData);
     GLuint perFrameDataBuf;
     glCreateBuffers(1, &perFrameDataBuf);
     glNamedBufferStorage(perFrameDataBuf, kBufferSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, perFrameDataBuf, 0, kBufferSize);
+
+    EASY_END_BLOCK;
 
     // ENABLING THINGS
     glEnable(GL_DEPTH_TEST);
@@ -136,44 +146,70 @@ int main()
 
     // MAIN LOOP
     while(!glfwWindowShouldClose(window)) {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
+        EASY_BLOCK("MainLoop");
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        {
+            EASY_BLOCK("Rendering");
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            glViewport(0, 0, width, height);
 
-        // MVP MATRIX
-        const float ratio = width / (float) height;
-        const glm::mat4 m = glm::rotate(
-                glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.5f)),
-                (float) glfwGetTime(),
-                glm::vec3(1.0f, 1.0f, 1.0f));
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        const glm::mat4 p = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
+            // MVP MATRIX
+            const float ratio = width / (float) height;
+            const glm::mat4 m = glm::rotate(
+                    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.5f)),
+                    (float) glfwGetTime(),
+                    glm::vec3(1.0f, 1.0f, 1.0f));
 
-        // BUFFER VARIABLE
-        PerFrameData perFrameData = {
-                .mvp = p * m,
-                .isWireframe = false
-        };
+            const glm::mat4 p = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
 
-        // SENDING BUFFER AND DRAW CUBE
-        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+            // BUFFER VARIABLE
+            PerFrameData perFrameData = {
+                    .mvp = p * m,
+                    .isWireframe = false
+            };
+
+            // SENDING BUFFER AND DRAW CUBE
+            glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-        // SENDING BUFFER AND DRAW LINES
-        perFrameData.isWireframe = true;
+            // SENDING BUFFER AND DRAW LINES
+            perFrameData.isWireframe = true;
 
-        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+            glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        {
+            EASY_BLOCK("Dummy1");
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+
+        {
+            EASY_BLOCK("Dummy2");
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        {
+            EASY_BLOCK("SwapBuffer");
+            glfwSwapBuffers(window);
+        }
+
+        {
+            EASY_BLOCK("PollEvents");
+            glfwPollEvents();
+        }
+
     }
+
+    // SAVE PROFILER DATA
+    profiler::dumpBlocksToFile("profiler_dump.prof");
 
     // CLEAN UP
     glDeleteProgram(program);

@@ -10,61 +10,42 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/ext.hpp>
 
 static const char * shaderCodeVertex = R"(
         #version 460 core
-        layout (std140, binding=0) uniform PerFrameData {
+        layout(std140, binding = 0) uniform PerFrameData
+        {
             uniform mat4 MVP;
-            uniform int isWireframe;
         };
-        layout (location=0) out vec3 color;
-
-        const vec3 pos[8] = vec3[8](
-                vec3(-1.0, -1.0, 1.0), vec3(1.0, -1.0, 1.0),
-                vec3(1.0, 1.0, 1.0), vec3(-1.0, 1.0, 1.0),
-
-                vec3(-1.0, -1.0, -1.0), vec3(1.0, -1.0, -1.0),
-                vec3(1.0, 1.0, -1.0), vec3(-1.0, 1.0, -1.0)
-                );
-
-        const vec3 col[8] = vec3[8](
-            vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0),
-            vec3(0.0, 0.0, 1.0), vec3(1.0, 1.0, 0.0),
-
-            vec3(1.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0),
-            vec3(0.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0)
-            );
-
-        const int indices[36] = int[36] (
-            0, 1, 2, 2, 3, 0,
-            1, 5, 6, 6, 2, 1,
-            7, 6, 5, 5, 4, 7,
-            4, 0, 3, 3, 7, 4,
-            4, 5, 1, 1, 0, 4,
-            3, 2, 6, 6, 7, 3
+        layout (location=0) out vec2 uv;
+        const vec2 pos[3] = vec2[3](
+            vec2(-0.6f, -0.4f),
+            vec2( 0.6f, -0.4f),
+            vec2( 0.0f,  0.6f)
         );
-
-        void main() {
-            int idx = indices[gl_VertexID];
-            gl_Position = MVP * vec4(pos[idx], 1.0);
-            color = isWireframe > 0 ? vec3(0.0) : col[idx];
-        };
-    )";
+        const vec2 tc[3] = vec2[3](
+            vec2( 0.0, 0.0 ),
+            vec2( 1.0, 0.0 ),
+            vec2( 0.5, 1.0 )
+        );
+        void main()
+        {
+            gl_Position = MVP * vec4(pos[gl_VertexID], 0.0, 1.0);
+            uv = tc[gl_VertexID];
+        }
+)";
 
 static const char * shaderCodeFragment = R"(
         #version 460 core
-        layout (location=0) in vec3 color;
+        layout (location=0) in vec2 uv;
         layout (location=0) out vec4 out_FragColor;
+        uniform sampler2D texture0;
 
         void main() {
-            out_FragColor = vec4(color, 1.0);
+            out_FragColor = texture(texture0, uv);
         };
     )";
-
-struct PerFrameData {
-    glm::mat4 mvp;
-    int isWireframe;
-};
 
 int main()
 {
@@ -123,11 +104,26 @@ int main()
     glUseProgram(program);
 
     // CREATING BUFFER DATA
-    const GLsizeiptr kBufferSize = sizeof(PerFrameData);
+    const GLsizeiptr kBufferSize = sizeof(glm::mat4);
     GLuint perFrameDataBuf;
     glCreateBuffers(1, &perFrameDataBuf);
     glNamedBufferStorage(perFrameDataBuf, kBufferSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, perFrameDataBuf, 0, kBufferSize);
+
+    // LOADING TEXTURE
+    int w, h, comp;
+    const uint8_t* img = stbi_load( "/home/dglipp/Projects/Randy/data/ch2_sample3_STB.jpg", &w, &h, &comp, 3 );
+    GLuint texture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glTextureParameteri(texture, GL_TEXTURE_MAX_LEVEL, 0);
+    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureStorage2D(texture, 1, GL_RGB8, w, h);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTextureSubImage2D(texture, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glBindTextures(0, 1, &texture);
+
+    stbi_image_free((void *)img);
 
     // ENABLING THINGS
     glEnable(GL_DEPTH_TEST);
@@ -145,31 +141,17 @@ int main()
 
         // MVP MATRIX
         const float ratio = width / (float) height;
-        const glm::mat4 m = glm::rotate(
-                glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.5f)),
-                (float) glfwGetTime(),
-                glm::vec3(1.0f, 1.0f, 1.0f));
+        const glm::mat4 m = glm::rotate(glm::mat4(1.0f),
+                                        (float) glfwGetTime(),
+                                        glm::vec3(1.0f, 1.0f, 1.0f));
 
-        const glm::mat4 p = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
+        const glm::mat4 p = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 1.0f, -1.0f);
 
-        // BUFFER VARIABLE
-        PerFrameData perFrameData = {
-                .mvp = p * m,
-                .isWireframe = false
-        };
+        const glm::mat4 mvp = p * m;
 
-        // SENDING BUFFER AND DRAW CUBE
-        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-        // SENDING BUFFER AND DRAW LINES
-        perFrameData.isWireframe = true;
-
-        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        // SENDING BUFFER AND DRAW
+        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, glm::value_ptr(mvp));
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
