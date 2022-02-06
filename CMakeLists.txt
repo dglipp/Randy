@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(RenderingCookbook CXX C)
+project(Randy CXX C)
 
 option(BUILD_WITH_EASY_PROFILER "Enable EasyProfiler usage" ON)
 option(BUILD_WITH_OPTICK "Enable Optick usage" OFF)
@@ -136,3 +136,4 @@ add_subdirectory(Tests/AssimpTest)
 add_subdirectory(Tests/Etc2compTest)
 add_subdirectory(Tests/TaskFlowTest)
 add_subdirectory(Tests/MeshOptimizerTest)
+add_subdirectory(Tests/TestAPIWrapper)
