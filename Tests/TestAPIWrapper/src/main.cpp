@@ -1,5 +1,4 @@
-#include <assert.h>
-#include <stdio.h>
+#include <iostream>
 
 #include "GL.h"
 
@@ -55,7 +54,7 @@ int main()
 	glfwSetErrorCallback(
 		[](int error, const char* description)
 		{
-			fprintf(stderr, "Error: %s\n", description);
+			std::cerr <<  "Error: " << description << std::endl;
 		}
 	);
 
@@ -66,7 +65,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(1024, 768, "Simple example", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(1024, 768, "API example", nullptr, nullptr);
 	if (!window)
 	{
 		glfwTerminate();
@@ -84,8 +83,8 @@ int main()
 
 	glfwMakeContextCurrent(window);
 
+    // api object use to load opengl functions
 	GL4API api;
-
 	GetAPI4(&api, [](const char* func) -> void* { return (void *)glfwGetProcAddress(func); });
 	InjectAPITracer4(&api);
 

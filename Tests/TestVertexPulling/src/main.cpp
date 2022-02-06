@@ -8,43 +8,29 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/version.h>
 
-static const char* shaderCodeVertex = R"(
-#version 460 core
-layout(std140, binding = 0) uniform PerFrameData
+#include <shared/internal/GLShader.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+
+using glm::mat4;
+using glm::vec3;
+using glm::vec2;
+
+struct VertexData
 {
-	uniform mat4 MVP;
-	uniform int isWireframe;
+    vec3 pos;
+    vec2 tc;
 };
-layout (location=0) in vec3 pos;
-layout (location=0) out vec3 color;
-void main()
-{
-	gl_Position = MVP * vec4(pos, 1.0);
-	color = isWireframe > 0 ? vec3(0.0f) : pos.xyz;
-}
-)";
 
-static const char* shaderCodeFragment = R"(
-#version 460 core
-layout (location=0) in vec3 color;
-layout (location=0) out vec4 out_FragColor;
-void main()
+struct PerFrameData
 {
-	out_FragColor = vec4(color, 1.0);
-}
-)";
-
-struct PerFrameData {
     glm::mat4 mvp;
-    int isWireframe;
 };
 
 int main()
@@ -88,19 +74,12 @@ int main()
     glBindVertexArray(VAO);
 
     // COMPILING SHADERS
-    const GLuint shaderVertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(shaderVertex, 1, &shaderCodeVertex, nullptr);
-    glCompileShader(shaderVertex);
+    GLShader vertexShader("../Tests/TestVertexPulling/shaders/test1.vert");
+    GLShader fragmentShader("../Tests/TestVertexPulling/shaders/test1.frag");
+    GLShader geometryShader("../Tests/TestVertexPulling/shaders/test1.geom");
 
-    const GLuint shaderFragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(shaderFragment, 1, &shaderCodeFragment, nullptr);
-    glCompileShader(shaderFragment);
-
-    const GLuint program = glCreateProgram();
-    glAttachShader(program, shaderVertex);
-    glAttachShader(program, shaderFragment);
-    glLinkProgram(program);
-    glUseProgram(program);
+    GLProgram program(vertexShader, fragmentShader, geometryShader);
+    program.useProgram();
 
     // LOADING ASSIMP GLFT2 FILE
     const aiScene * scene = aiImportFile("../data/rubber_duck/scene.gltf", aiProcess_Triangulate);
@@ -109,27 +88,40 @@ int main()
         exit(255);
     }
 
-    std::vector<glm::vec3> positions;
-    const aiMesh * mesh = scene->mMeshes[0];
-    for(int i=0; i!= mesh->mNumFaces; ++i) {
-        const aiFace & face = mesh->mFaces[i];
-        const unsigned int idx[3] = { face.mIndices[0], face.mIndices[1], face.mIndices[2] };
-        for(unsigned int j : idx) {
-            const aiVector3D v = mesh->mVertices[j];
-            positions.emplace_back(v.x, v.z, v.y);
+    const aiMesh *mesh = scene->mMeshes[0];
+    std::vector<VertexData> vertices;
+    for (int i = 0; i!=mesh->mNumVertices; ++i)
+    {
+        const aiVector3D v = mesh->mVertices[i];
+        const aiVector3D t = mesh->mTextureCoords[0][i];
+        vertices.push_back({
+            .pos = vec3(v.x, v.z, v.y),
+            .tc = vec2(t.x, t.y)});
+    }
+
+    std::vector<unsigned int> indices;
+    for (int i = 0; i != mesh->mNumFaces; ++i)
+    {
+        for (int j = 0; j != 3; ++j)
+        {
+            indices.push_back(mesh->mFaces[i].mIndices[j]);
         }
     }
+
     aiReleaseImport(scene);
 
-    // CREATING MODEL BUFFER DATA
-    GLuint meshData;
-    glCreateBuffers(1, &meshData);
-    glNamedBufferStorage(meshData, sizeof(glm::vec3) * positions.size(), positions.data(), 0);
-    glVertexArrayVertexBuffer(VAO, 0, meshData, 0, sizeof(glm::vec3));
-    glEnableVertexArrayAttrib(VAO, 0);
-    glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(VAO, 0, 0);
-    const int numVertices = static_cast<int>(positions.size());
+    // CREATING BUFFERS
+    const size_t kSizeIndices = sizeof(unsigned int) * indices.size();
+    const size_t kSizeVertices = sizeof(VertexData) * vertices.size();
+    GLuint dataIndices;
+    GLuint dataVertices;
+    glCreateBuffers(1, &dataIndices);
+    glCreateBuffers(1, &dataVertices);
+    glNamedBufferStorage(dataIndices, kSizeIndices, indices.data(), 0);
+    glNamedBufferStorage(dataVertices, kSizeVertices, vertices.data(), 0);
+
+    glVertexArrayElementBuffer(VAO, dataIndices);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, dataVertices);
 
     // CREATING MATRIX BUFFER DATA
     const GLsizeiptr kBufferSize = sizeof(PerFrameData);
@@ -140,8 +132,18 @@ int main()
 
     // ENABLING THINGS
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_POLYGON_OFFSET_LINE);
-    glPolygonOffset(-1.0f, -1.0f);
+
+    // LOADING TEXTURE
+    int w, h, comp;
+    const uint8_t *img = stbi_load("../data/rubber_duck/textures/Duck_baseColor.png", &w, &h, &comp, 3);
+    GLuint tx;
+    glCreateTextures(GL_TEXTURE_2D, 1, &tx);
+    glTextureParameteri(tx, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(tx, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureStorage2D(tx, 1, GL_RGB8, w, h);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTextureSubImage2D(tx, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glBindTextures(0, 1, &tx);
 
     // MAIN LOOP
     while(!glfwWindowShouldClose(window)) {
@@ -163,35 +165,14 @@ int main()
 
         // BUFFER VARIABLE
         PerFrameData perFrameData = {
-                .mvp = p * m,
-                .isWireframe = false
+                .mvp = p * m
         };
 
         // SENDING BUFFER AND DRAW CUBE
         glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawArrays(GL_TRIANGLES, 0, numVertices);
-
-        // SENDING BUFFER AND DRAW LINES
-        perFrameData.isWireframe = true;
-
-        glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawArrays(GL_TRIANGLES, 0, numVertices);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // CLEAN UP
-    glDeleteProgram(program);
-    glDeleteShader(shaderVertex);
-    glDeleteShader(shaderFragment);
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &meshData);
-    glDeleteBuffers(1, &perFrameDataBuf);
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
 }
