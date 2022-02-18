@@ -34,7 +34,7 @@ std::string readShaderFile(std::string filename)
             return std::string();
         }
 
-        const std::string importName = code.substr(p1 + 2, p2 - p1 - 3);
+        const std::string importName = code.substr(p1 + 1, p2 - p1 - 1);
         const std::string includedFile = readShaderFile(importName);
 
         code.replace(pos, p2 - pos + 1, includedFile);
@@ -90,6 +90,33 @@ GLenum GLShaderTypeFromName(std::string filename)
     return 0;
 }
 
+std::string shaderTypeNameFromEnum(GLenum shaderType)
+{
+    switch (shaderType)
+    {
+    case GL_VERTEX_SHADER:
+        return "Vertex Shader";
+
+    case GL_FRAGMENT_SHADER:
+        return "Fragment Shader";
+
+    case GL_GEOMETRY_SHADER:
+        return "Geometry Shader";
+
+    case GL_TESS_CONTROL_SHADER:
+        return "Tessellation Control Shader";
+
+    case GL_TESS_EVALUATION_SHADER:
+        return "Tessellation Evaluation Shader";
+    
+    case GL_COMPUTE_SHADER:
+        return "Compute Shader";
+
+    default:
+        return "Unknown Shader Type";
+    };
+}
+
 void printProgramInfoLog(GLuint handle)
 {
     char buffer[8192];
@@ -104,22 +131,24 @@ void printProgramInfoLog(GLuint handle)
 }
 
 GLShader::GLShader(GLenum shaderType, const char * text)
-    : type(shaderType)
-{
-    handle = glCreateShader(type);
-    glShaderSource(handle, 1, &text, nullptr);
-    glCompileShader(handle);
+    :
+        type(shaderType)
+        {
+            handle = glCreateShader(type);
+            glShaderSource(handle, 1, &text, nullptr);
+            glCompileShader(handle);
 
-    char buffer[8192];
-    GLsizei length = 0;
+            char buffer[8192];
+            GLsizei length = 0;
 
-    glGetShaderInfoLog(handle, sizeof(buffer), &length, buffer);
-    if(length)
-    {
-        std::cout << buffer << "\n";
-        printShaderSource(text);
-        assert(false);
-    }
+            glGetShaderInfoLog(handle, sizeof(buffer), &length, buffer);
+            if (length)
+            {
+                std::cout << "Error in " << shaderTypeNameFromEnum(shaderType) << "\n";
+                std::cout << buffer << "\n";
+                printShaderSource(text);
+                assert(false);
+            }
 }
 
 GLShader::GLShader(const char * filename)

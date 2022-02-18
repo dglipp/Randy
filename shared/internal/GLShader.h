@@ -9,6 +9,7 @@ static void printShaderSource(const std::string text);
 static int endsWith(std::string s, std::string part);
 
 GLenum GLShaderTypeFromName(std::string filename);
+std::string shaderTypeNameFromEnum(GLenum shaderType);
 
 void printProgramInfoLog(GLuint handle);
 
