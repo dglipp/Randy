@@ -57,7 +57,7 @@ static void printShaderSource(const std::string text)
     }
 }
 
-static int endsWith(std::string s, std::string part)
+int endsWith(std::string s, std::string part)
 {
     if (s.length() >= part.length()) {
         return (s.compare(s.length() - part.length(), part.length(), part) == 0);
