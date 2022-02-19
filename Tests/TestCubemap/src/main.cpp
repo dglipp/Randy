@@ -141,6 +141,7 @@ int main()
 
     // ENABLING THINGS
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     // LOADING TEXTURE
     int w, h, comp;
@@ -202,7 +203,7 @@ int main()
 
 
         mat4 m = glm::rotate(
-                translate(mat4(1.0f), vec3(0.0f, -0.5f, -1.5f)),
+                translate(mat4(1.0f), vec3(0.0f, -0.5f, -2.5f)),
                 (float) glfwGetTime(),
                 vec3(0.0f, 1.0f, 0.0f));
 
@@ -219,7 +220,7 @@ int main()
         glDrawElements(GL_TRIANGLES, static_cast<unsigned>(indices.size()), GL_UNSIGNED_INT, nullptr);
 
         // DRAW CUBEMAP
-        m = glm::scale(mat4(1.0f), vec3(2.0f));
+        m = glm::scale(mat4(1.0f), vec3(20.0f));
         perFrameData.model = m;
         perFrameData.mvp = p * m;
         glNamedBufferSubData(perFrameDataBuf, 0, kBufferSize, &perFrameData);
