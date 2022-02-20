@@ -5,45 +5,58 @@
 #include <sstream>
 #include <string>
 #include <assert.h>
+#include <malloc.h>
+#include <cstring>
 
 std::string readShaderFile(std::string filename)
 {
-    std::ifstream file;
-    file.open(filename, std::ios::in);
+    	FILE* file = fopen(filename.c_str(), "r");
 
-    if(!file.is_open())
-    {
-        std::cout << "[IO ERROR]: Cannot open file " << filename << "\n";
-        return std::string();
-    }
+	if (!file)
+	{
+		printf("I/O error. Cannot open shader file '%s'\n", filename.c_str());
+		return std::string();
+	}
 
-    std::stringstream buffer;
-    buffer << file.rdbuf();
+	fseek(file, 0L, SEEK_END);
+	const auto bytesinfile = ftell(file);
+	fseek(file, 0L, SEEK_SET);
 
-    std::string code(buffer.str());
+	char* buffer = (char*)alloca(bytesinfile + 1);
+	const size_t bytesread = fread(buffer, 1, bytesinfile, file);
+	fclose(file);
 
-    while(code.find("#include ") != code.npos)
-    {
-        const auto pos = code.find("#include ");
-        const auto p1 = code.find('<', pos);
-        const auto p2 = code.find('>', pos);
+	buffer[bytesread] = 0;
 
-        if (p1 == code.npos || p2 == code.npos || p2 <= p1)
-        {
-            std::cout << "Error while loading shader program " << code.c_str() << "\n";
-            return std::string();
-        }
+	static constexpr unsigned char BOM[] = { 0xEF, 0xBB, 0xBF };
 
-        const std::string importName = code.substr(p1 + 1, p2 - p1 - 1);
-        const std::string includedFile = readShaderFile(importName);
+	if (bytesread > 3)
+	{
+		if (!memcmp(buffer, BOM, 3))
+			memset(buffer, ' ', 3);
+	}
 
-        code.replace(pos, p2 - pos + 1, includedFile);
-    }
+	std::string code(buffer);
 
-    return code;
+	while (code.find("#include ") != code.npos)
+	{
+		const auto pos = code.find("#include ");
+		const auto p1 = code.find('<', pos);
+		const auto p2 = code.find('>', pos);
+		if (p1 == code.npos || p2 == code.npos || p2 <= p1)
+		{
+			printf("Error while loading shader program: %s\n", code.c_str());
+			return std::string();
+		}
+		const std::string name = code.substr(p1 + 1, p2 - p1 - 1);
+		const std::string include = readShaderFile(name.c_str());
+		code.replace(pos, p2-pos+1, include.c_str());
+	}
+
+	return code;
 }
 
-static void printShaderSource(const std::string text)
+void printShaderSource(const std::string text)
 {
     std::stringstream ss(text);
     std::string line;

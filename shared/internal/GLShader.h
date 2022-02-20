@@ -5,7 +5,7 @@
 
 std::string readShaderFile(const std::string filename);
 
-static void printShaderSource(const std::string text);
+void printShaderSource(const std::string text);
 int endsWith(std::string s, std::string part);
 
 GLenum GLShaderTypeFromName(std::string filename);

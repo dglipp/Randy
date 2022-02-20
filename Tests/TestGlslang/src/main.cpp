@@ -16,7 +16,7 @@ void saveSPIRVBinaryFile(const char* filename, unsigned int* code, size_t size)
     f.close();
 }
 
-void testShaderCompilation(const char* sourceFilename, const char* destFilename)
+void testShaderCompilation(std::string sourceFilename, const char* destFilename)
 {
     ShaderModule shaderModule;
     if(compileShaderFile(sourceFilename, shaderModule) < 1)
