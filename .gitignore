@@ -1,7 +1,2 @@
-.idea
 .vscode
-bin
-cmake-build-debug
-deps
-data
 build
