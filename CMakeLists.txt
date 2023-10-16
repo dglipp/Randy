@@ -1,9 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
-project(Randy CXX)
+project(Randy VERSION 0.0.1)
 
-add_subdirectory(engine)
-add_subdirectory(testbed)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-if(WIN32)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
+set(ENGINE_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/engine/include)
+include_directories(${ENGINE_INCLUDE_PATH})
+
+file(GLOB_RECURSE ENGINE_SRC_FILES LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} engine/src/*.c??)
+file(GLOB_RECURSE ENGINE_HEADER_FILES LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} engine/include/*.h)
+
+add_library(engine SHARED ${ENGINE_SRC_FILES} ${ENGINE_HEADER_FILES})
+
+file(GLOB_RECURSE TESTBED_SRC_FILES LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} testbed/src/*.c??)
+file(GLOB_RECURSE TESTBED_HEADER_FILES LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} testbed/include/*.h)
+
+add_executable(testbed ${TESTBED_SRC_FILES} ${TESTBED_HEADER_FILES})
+
+target_link_libraries(testbed engine)
