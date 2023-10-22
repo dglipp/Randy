@@ -1,6 +1,9 @@
 #include <core/logger.h>
 #include <core/asserts.h>
 
+//TODO: Test
+#include <platform/platform.h>
+
 void main(){
     const Logger logger;
 
@@ -11,6 +14,11 @@ void main(){
     R_DEBUG("A test message");
     R_TRACE("A test message");
 
-    R_ASSERT(false);
+    PlatformState state("Randy Engine Testbed", 100, 100, 1280, 720);
+
+    while(true){
+        state.pumpMessages();
+    }
+
     return;
 }

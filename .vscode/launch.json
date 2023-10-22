@@ -27,12 +27,6 @@
             "linux": {
                 "externalConsole": false,
             },
-            "windows": {
-                "type": "cppvsdbg",
-                "program": "${workspaceFolder}/bin/tests.exe",
-                // cppvsdbg requires this instead of externalConsole
-                "console": "integratedTerminal",
-            }
         },
         {
             "name": "Launch Kohi Tools",
@@ -58,12 +52,6 @@
             },
             "linux": {
                 "externalConsole": false,
-            },
-            "windows": {
-                "type": "cppvsdbg",
-                "program": "${workspaceFolder}/bin/tools.exe",
-                // cppvsdbg requires this instead of externalConsole
-                "console": "integratedTerminal"
             },
         }
     ]

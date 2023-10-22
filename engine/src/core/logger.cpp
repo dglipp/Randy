@@ -1,14 +1,18 @@
 #include "core/logger.h"
+#include "platform/platform.h"
 
 // TODO: temporary
 #include <iostream>
 
 
 void log_output(log_level level, std::string message){
-    bool is_error = level < 2;
+    bool isError = level < LOG_LEVEL_WARN;
 
-    // TODO: plan specific output
-    std::cout << Logger::level_strings[level] <<  message << "\n";
+    if(isError){
+        PlatformState::consoleWriteError(Logger::level_strings[level] + message + "\n", level);
+    } else{
+        PlatformState::consoleWrite(Logger::level_strings[level] + message + "\n", level);
+    }
 }
 
 Logger::Logger(){
