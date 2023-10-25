@@ -5,9 +5,12 @@
 
 #include <platform/platform.h>
 #include <core/logger.h>
+#include "game_types.h"
 
 class Application{
     private:
+        Game * gameInstance;
+
         int16_t startPosX;
         int16_t startPosY;
         int16_t startWidth;
@@ -23,7 +26,7 @@ class Application{
         const Logger logger;
 
     public:
-        Application(std::string name, int16_t startPosX, int16_t startPosY, int16_t startWidth, int16_t startHeight);
+        Application(Game * gameInstance);
 
         void run();
 };
