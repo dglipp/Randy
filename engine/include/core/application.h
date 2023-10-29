@@ -19,7 +19,7 @@ class Application{
 
         bool isRunning;
         bool isSuspended;
-        PlatformState platform;
+        Platform platform;
         int16_t width;
         int16_t height;
         double_t lastTime;

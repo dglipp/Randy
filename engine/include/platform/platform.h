@@ -14,7 +14,7 @@ struct InternalState{
 
 #endif
 
-class PlatformState
+class Platform
 {
     void *internalState;
 
@@ -22,8 +22,8 @@ class PlatformState
     void sleep(uint64_t ms);
 
     public:
-        PlatformState(std::string applicationName, int32_t x, int32_t y, int32_t width, int32_t height);
-        ~PlatformState();
+        Platform(std::string applicationName, int32_t x, int32_t y, int32_t width, int32_t height);
+        ~Platform();
         static void *allocate(size_t size, bool aligned);
         static void freeMemory(void *block, bool aligned);
         static void *zeroMemory(void *block, size_t size);

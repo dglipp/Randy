@@ -1,5 +1,6 @@
-#include <core/application.h>
-#include <core/logger.h>
+#include "core/application.h"
+#include "core/logger.h"
+#include "core/rmemory.h"
 
 static bool initialized = false;
 
@@ -42,6 +43,7 @@ Application::Application(Game * gameInstance)
 }
 
 void Application::run(){
+    R_INFO(MemoryInterface::getMemoryUsageString());
     while(this->isRunning){
         if(!platform.pumpMessages())
         {

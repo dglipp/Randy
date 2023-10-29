@@ -9,9 +9,9 @@ void log_output(log_level level, std::string message){
     bool isError = level < LOG_LEVEL_WARN;
 
     if(isError){
-        PlatformState::consoleWriteError(Logger::level_strings[level] + message + "\n", level);
+        Platform::consoleWriteError(Logger::level_strings[level] + message + "\n", level);
     } else{
-        PlatformState::consoleWrite(Logger::level_strings[level] + message + "\n", level);
+        Platform::consoleWrite(Logger::level_strings[level] + message + "\n", level);
     }
 }
 

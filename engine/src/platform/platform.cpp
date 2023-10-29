@@ -8,7 +8,7 @@ static LARGE_INTEGER startTime;
 
 LRESULT CALLBACK win32_process_message(HWND hwnd, uint32_t msg, WPARAM wParam, LPARAM lParam);
 
-PlatformState::PlatformState(std::string applicationName, int32_t x, int32_t y, int32_t width, int32_t height){
+Platform::Platform(std::string applicationName, int32_t x, int32_t y, int32_t width, int32_t height){
     internalState = new InternalState;
 
     InternalState *state = (InternalState *)internalState;
@@ -83,7 +83,7 @@ PlatformState::PlatformState(std::string applicationName, int32_t x, int32_t y, 
     QueryPerformanceCounter(&startTime);
 }
 
-PlatformState::~PlatformState(){
+Platform::~Platform(){
     InternalState *state = (InternalState *)internalState;
 
     if(state->hwnd){
@@ -92,7 +92,7 @@ PlatformState::~PlatformState(){
     }
 }
 
-bool PlatformState::pumpMessages(){
+bool Platform::pumpMessages(){
     MSG message;
     while(PeekMessageA(&message, nullptr, 0, 0, PM_REMOVE)){
         TranslateMessage(&message);
@@ -102,27 +102,27 @@ bool PlatformState::pumpMessages(){
     return true;
 }
 
-    void *PlatformState::allocate(size_t size, bool aligned){
+    void *Platform::allocate(size_t size, bool aligned){
         return malloc(size);
     }
 
-    void PlatformState::freeMemory(void *block, bool aligned){
+    void Platform::freeMemory(void *block, bool aligned){
         free(block);
     }
 
-    void *PlatformState::zeroMemory(void *block, size_t size){
+    void *Platform::zeroMemory(void *block, size_t size){
         return memset(block, 0, size);
     }
 
-    void *PlatformState::copyMemory(void *dest, const void *source, size_t size){
+    void *Platform::copyMemory(void *dest, const void *source, size_t size){
         return memcpy(dest, source, size);
     }
 
-    void *PlatformState::setMemory(void *dest, int32_t value, size_t size){
+    void *Platform::setMemory(void *dest, int32_t value, size_t size){
         return memset(dest, value, size);
     }
     	
-    void PlatformState::consoleWrite(std::string message, uint8_t color){
+    void Platform::consoleWrite(std::string message, uint8_t color){
         HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
         // FATAL, ERROR, WARN, INFO, DEBUG, TRACE
@@ -137,7 +137,7 @@ bool PlatformState::pumpMessages(){
         WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), message.c_str(), (DWORD)length, numberWritten, 0);
     }
 
-    void PlatformState::consoleWriteError(std::string message, uint8_t color){
+    void Platform::consoleWriteError(std::string message, uint8_t color){
         HANDLE consoleHandle = GetStdHandle(STD_ERROR_HANDLE);
 
         // FATAL, ERROR, WARN, INFO, DEBUG, TRACE
@@ -152,13 +152,13 @@ bool PlatformState::pumpMessages(){
         WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), message.c_str(), (DWORD)length, numberWritten, 0);
     }
 
-    double_t PlatformState::getAbsoluteTime(){
+    double_t Platform::getAbsoluteTime(){
         LARGE_INTEGER nowTime;
         QueryPerformanceCounter(&nowTime);
         return (double_t)nowTime.QuadPart * clockFrequency;
     }
 
-    void PlatformState::sleep(uint64_t ms){
+    void Platform::sleep(uint64_t ms){
         Sleep((DWORD) ms);
     }
 

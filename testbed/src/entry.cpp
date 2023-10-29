@@ -1,5 +1,6 @@
 #include <entry.h>
 #include "game.h"
+#include <core/rmemory.h>
 
 bool createGame(Game * game){
     game->startPosX = 100;
@@ -13,7 +14,7 @@ bool createGame(Game * game){
     game->onResize = gameOnResize;
     game->initialize = gameInitialize;
 
-    game->state = PlatformState::allocate(sizeof(GameState), false);
+    game->state = MemoryInterface::allocate(sizeof(GameState), MEMORY_TAG_GAME);
 
     return true;
 }
