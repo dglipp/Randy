@@ -3,9 +3,10 @@
 #include <cstdint>
 #include <string>
 
-#include <platform/platform.h>
-#include <core/logger.h>
+#include "platform/platform.h"
+#include "core/logger.h"
 #include "game_types.h"
+#include "core/event.h"
 
 class Application{
     private:
@@ -24,6 +25,7 @@ class Application{
         int16_t height;
         double_t lastTime;
         const Logger logger;
+        EventSystem eventSystem;
 
     public:
         Application(Game * gameInstance);

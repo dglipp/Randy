@@ -37,7 +37,7 @@ public:
 
     static void *allocate(size_t size, memory_tag tag);
     static void free(void *block, size_t size, memory_tag tag);
-    static void *zeroMemory(void *block, size_t size, memory_tag tag);
+    static void *zeroMemory(void *block, size_t size);
     static void *copyMemory(void *dest, const void *source, size_t size);
     static void *setMemory(void *dest, int32_t value, size_t size);
 

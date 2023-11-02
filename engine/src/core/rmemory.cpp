@@ -105,7 +105,7 @@ void MemoryInterface::free(void *block, size_t size, memory_tag tag)
     Platform::freeMemory(block, false);
 }
 
-void *MemoryInterface::zeroMemory(void *block, size_t size, memory_tag tag)
+void *MemoryInterface::zeroMemory(void *block, size_t size)
 {
     return Platform::zeroMemory(block, size);
 }

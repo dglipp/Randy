@@ -17,6 +17,7 @@ Application::Application(Game * gameInstance)
     , isSuspended(false)
     , platform(gameInstance->name, gameInstance->startPosX, gameInstance->startPosY, gameInstance->startWidth, gameInstance->startHeight)
     , logger()
+    , eventSystem()
 {
     if (initialized)
     {
@@ -31,19 +32,12 @@ Application::Application(Game * gameInstance)
 
     gameInstance->onResize(gameInstance, width, height);
 
-    // TODO: remove
-    R_FATAL("A test message");
-    R_ERROR("A test message");
-    R_WARN("A test message");
-    R_INFO("A test message");
-    R_DEBUG("A test message");
-    R_TRACE("A test message");
-
     initialized = true;
 }
 
 void Application::run(){
     R_INFO(MemoryInterface::getMemoryUsageString());
+
     while(this->isRunning){
         if(!platform.pumpMessages())
         {
@@ -64,6 +58,5 @@ void Application::run(){
             }
         }
     }
-
     this->isRunning = false;
 }
