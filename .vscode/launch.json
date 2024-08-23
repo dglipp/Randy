@@ -2,57 +2,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch TestBed",
+            "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Debug",
-            "environment": [],
-            "program": "${workspaceFolder}/build/Debug/testbed.exe",
-            "console": "integratedTerminal",
-        },
-        {
-            "name": "Launch Unit Tests",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/tests",
+            "program": "${workspaceFolder}/bin/testbed.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin/",
-            "osx": {
-                "MIMode": "lldb",
-                "targetArchitecture": "arm64",
-                "externalConsole": false,
-            },
-            "linux": {
-                "externalConsole": false,
-            },
+            "environment": [],
+            "console":"newExternalWindow",
         },
         {
-            "name": "Launch Kohi Tools",
+            "name": "(Linux) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/tools",
-            "args": [
-                "buildshaders",
-                "${workspaceFolder}/assets/shaders/Builtin.MaterialShader.vert.glsl",
-                "${workspaceFolder}/assets/shaders/Builtin.MaterialShader.frag.glsl",
-                "${workspaceFolder}/assets/shaders/Builtin.UIShader.vert.glsl",
-                "${workspaceFolder}/assets/shaders/Builtin.UIShader.frag.glsl",
-                "${workspaceFolder}/assets/shaders/Builtin.SkyboxShader.vert.glsl",
-                "${workspaceFolder}/assets/shaders/Builtin.SkyboxShader.frag.glsl"
-            ],
+            "program": "${workspaceFolder}/bin/testbed",
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin/",
             "environment": [],
-            "osx": {
-                "MIMode": "lldb",
-                "targetArchitecture": "arm64",
-                "externalConsole": false,
-            },
-            "linux": {
-                "externalConsole": false,
-            },
         }
     ]
 }
