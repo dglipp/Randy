@@ -59,6 +59,8 @@
         "renderer_frontend.h": "c",
         "memory": "c",
         "xstring": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "platform.h": "c",
+        "logger.h": "c"
     }
 }
