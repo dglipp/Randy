@@ -56,6 +56,9 @@
         "typeinfo": "c",
         "windowsx.h": "c",
         "vulkan_platform.h": "c",
-        "renderer_frontend.h": "c"
+        "renderer_frontend.h": "c",
+        "memory": "c",
+        "xstring": "c",
+        "xutility": "c"
     }
 }
